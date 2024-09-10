@@ -1,10 +1,11 @@
 import textwrap
-from abc import ABC, abstractclassmethod, abstractproperty
+from abc import ABC, abstractmethod
 from datetime import datetime
 
 
 class Cliente:
-    def __init__(self, endereco):
+    def __init__(self, nome, endereco):
+        self.nome = nome
         self.endereco = endereco
         self.contas = []
 
@@ -17,8 +18,7 @@ class Cliente:
 
 class PessoaFisica(Cliente):
     def __init__(self, nome, data_nascimento, cpf, endereco):
-        super().__init__(endereco)
-        self.nome = nome
+        super().__init__(nome, endereco)
         self.data_nascimento = data_nascimento
         self.cpf = cpf
 
@@ -61,26 +61,24 @@ class Conta:
 
         if excedeu_saldo:
             print("\n@@@ Operação falhou! Você não tem saldo suficiente. @@@")
+            return False
 
-        elif valor > 0:
+        if valor > 0:
             self._saldo -= valor
             print("\n=== Saque realizado com sucesso! ===")
             return True
 
-        else:
-            print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
-
+        print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
         return False
 
     def depositar(self, valor):
         if valor > 0:
             self._saldo += valor
             print("\n=== Depósito realizado com sucesso! ===")
-        else:
-            print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
-            return False
+            return True
 
-        return True
+        print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
+        return False
 
 
 class ContaCorrente(Conta):
@@ -99,17 +97,16 @@ class ContaCorrente(Conta):
 
         if excedeu_limite:
             print("\n@@@ Operação falhou! O valor do saque excede o limite. @@@")
+            return False
 
-        elif excedeu_saques:
+        if excedeu_saques:
             print("\n@@@ Operação falhou! Número máximo de saques excedido. @@@")
+            return False
 
-        else:
-            return super().sacar(valor)
-
-        return False
+        return super().sacar(valor)
 
     def __str__(self):
-        return f"""\
+        return f"""\ 
             Agência:\t{self.agencia}
             C/C:\t\t{self.numero}
             Titular:\t{self.cliente.nome}
@@ -129,18 +126,18 @@ class Historico:
             {
                 "tipo": transacao.__class__.__name__,
                 "valor": transacao.valor,
-                "data": datetime.now().strftime("%d-%m-%Y %H:%M:%s"),
+                "data": datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
             }
         )
 
 
 class Transacao(ABC):
     @property
-    @abstractproperty
+    @abstractmethod
     def valor(self):
         pass
 
-    @abstractclassmethod
+    @abstractmethod
     def registrar(self, conta):
         pass
 
@@ -176,7 +173,7 @@ class Deposito(Transacao):
 
 
 def menu():
-    menu = """\n
+    menu_texto = """\n
     ================ MENU ================
     [d]\tDepositar
     [s]\tSacar
@@ -186,7 +183,7 @@ def menu():
     [nu]\tNovo usuário
     [q]\tSair
     => """
-    return input(textwrap.dedent(menu))
+    return input(textwrap.dedent(menu_texto))
 
 
 def filtrar_cliente(cpf, clientes):
@@ -197,7 +194,7 @@ def filtrar_cliente(cpf, clientes):
 def recuperar_conta_cliente(cliente):
     if not cliente.contas:
         print("\n@@@ Cliente não possui conta! @@@")
-        return
+        return None
 
     # FIXME: não permite cliente escolher a conta
     return cliente.contas[0]
@@ -279,7 +276,6 @@ def criar_cliente(clientes):
     endereco = input("Informe o endereço (logradouro, nro - bairro - cidade/sigla estado): ")
 
     cliente = PessoaFisica(nome=nome, data_nascimento=data_nascimento, cpf=cpf, endereco=endereco)
-
     clientes.append(cliente)
 
     print("\n=== Cliente criado com sucesso! ===")
@@ -295,7 +291,7 @@ def criar_conta(numero_conta, clientes, contas):
 
     conta = ContaCorrente.nova_conta(cliente=cliente, numero=numero_conta)
     contas.append(conta)
-    cliente.contas.append(conta)
+    cliente.adicionar_conta(conta)
 
     print("\n=== Conta criada com sucesso! ===")
 
@@ -336,7 +332,10 @@ def main():
             break
 
         else:
-            print("\n@@@ Operação inválida, por favor selecione novamente a operação desejada. @@@")
+            print("\n@@@ Opção inválida! @@@")
+
+    print("\n=== Sistema encerrado ===")
 
 
-main()
+if __name__ == "__main__":
+    main()

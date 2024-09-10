@@ -1,37 +1,40 @@
 from abc import ABC, abstractclassmethod, abstractproperty
 from datetime import datetime
 
-
+# Classe Cliente representa um cliente genérico de um banco.
 class Cliente:
     def __init__(self, endereco):
         self.endereco = endereco
-        self.contas = []
+        self.contas = []  # Armazena as contas associadas ao cliente
 
     def realizar_transacao(self, conta, transacao):
+        """Método para realizar uma transação em uma conta específica."""
         transacao.registrar(conta)
 
     def adicionar_conta(self, conta):
+        """Método para adicionar uma nova conta ao cliente."""
         self.contas.append(conta)
 
-
+# Classe PessoaFisica herda de Cliente e adiciona informações específicas de uma pessoa física.
 class PessoaFisica(Cliente):
     def __init__(self, nome, data_nascimento, cpf, endereco):
-        super().__init__(endereco)
+        super().__init__(endereco)  # Inicializa a classe base Cliente
         self.nome = nome
         self.data_nascimento = data_nascimento
         self.cpf = cpf
 
-
+# Classe Conta representa uma conta bancária genérica.
 class Conta:
     def __init__(self, numero, cliente):
         self._saldo = 0
         self._numero = numero
-        self._agencia = "0001"
+        self._agencia = "0001"  # Agência padrão para todas as contas
         self._cliente = cliente
-        self._historico = Historico()
+        self._historico = Historico()  # Histórico de transações da conta
 
     @classmethod
     def nova_conta(cls, cliente, numero):
+        """Método de classe para criar uma nova conta."""
         return cls(numero, cliente)
 
     @property
@@ -81,12 +84,12 @@ class Conta:
 
         return True
 
-
+# Classe ContaCorrente herda de Conta e adiciona características específicas para contas correntes.
 class ContaCorrente(Conta):
     def __init__(self, numero, cliente, limite=500, limite_saques=3):
         super().__init__(numero, cliente)
-        self.limite = limite
-        self.limite_saques = limite_saques
+        self.limite = limite  # Limite de crédito da conta corrente
+        self.limite_saques = limite_saques  # Limite de saques diários
 
     def sacar(self, valor):
         numero_saques = len(
@@ -108,31 +111,33 @@ class ContaCorrente(Conta):
         return False
 
     def __str__(self):
-        return f"""\
+        """Método para exibir informações da conta corrente."""
+        return f"""\ 
             Agência:\t{self.agencia}
             C/C:\t\t{self.numero}
             Titular:\t{self.cliente.nome}
         """
 
-
+# Classe Historico armazena o histórico de transações de uma conta.
 class Historico:
     def __init__(self):
-        self._transacoes = []
+        self._transacoes = []  # Lista para armazenar transações
 
     @property
     def transacoes(self):
         return self._transacoes
 
     def adicionar_transacao(self, transacao):
+        """Adiciona uma transação ao histórico."""
         self._transacoes.append(
             {
                 "tipo": transacao.__class__.__name__,
                 "valor": transacao.valor,
-                "data": datetime.now().strftime("%d-%m-%Y %H:%M:%s"),
+                "data": datetime.now().strftime("%d-%m-%Y %H:%M:%S"),  # Corrigido formato da data
             }
         )
 
-
+# Classe Transacao é uma classe abstrata para transações bancárias.
 class Transacao(ABC):
     @property
     @abstractproperty
@@ -143,7 +148,7 @@ class Transacao(ABC):
     def registrar(self, conta):
         pass
 
-
+# Classe Saque representa uma transação de saque.
 class Saque(Transacao):
     def __init__(self, valor):
         self._valor = valor
@@ -158,7 +163,7 @@ class Saque(Transacao):
         if sucesso_transacao:
             conta.historico.adicionar_transacao(self)
 
-
+# Classe Deposito representa uma transação de depósito.
 class Deposito(Transacao):
     def __init__(self, valor):
         self._valor = valor
